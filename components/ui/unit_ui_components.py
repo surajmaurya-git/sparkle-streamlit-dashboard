@@ -1,6 +1,6 @@
 import streamlit as st
 import streamviz as sv
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import numpy as np
 import pandas as pd
@@ -14,27 +14,86 @@ from components.ui.time_range_controller import (
     is_within_tolerance,
 )
 
+from components.custome_component import draw_custom_tile
+
 is_options_changed = False
+
+
 
 
 def unit_header(title, des=None, node_client=None, device_status_res=None):
     if title is None:
         st.error("Please provide a valid title.")
     VARIABLES = st.session_state.variables
-    headercols = st.columns([1, 0.11, 0.11, 0.11], gap="small")
+    headercols = st.columns([1, 0.12, 0.11, 0.11], gap="small")
     with headercols[0]:
         st.title(title, anchor=False)
     with headercols[1]:
-        # if device_status_res is not None or device_status_res.get("status") is True:
-        #     device_status = None
-        #     if device_status_res.get("device_status"):
-        #         device_status = "Online"
-        #     else:
-        #         device_status = "Offline"
-        # else:
-        #     device_status = "..."
-        # st.button(device_status, disabled=True, use_container_width=True)
-        pass
+        if device_status_res is not None or device_status_res.get("status") is True:
+            device_status = None
+            if device_status_res.get("device_status"):
+                device_status = "Online"
+            else:
+                device_status = "Offline"
+        else:
+            device_status = "..."
+
+        with st.container(border=False, height=40):
+            if device_status == "Online":
+                st.markdown(
+                    f"""
+                    <div style="
+                        margin-top: 0px;
+                        height: 38px;
+                        margin-right: 0px;
+                        padding-top: 0;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        font-size: 16px;
+                        line-height: 25px;
+                        color: white;
+                        font-weight: 600;
+                        background-color: green;
+                        border-radius: 6px;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                        display: flex;
+                    ">
+                        {device_status}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style="
+                        margin-top: 0px;
+                        height: 38px;
+                        margin-right: 0px;
+                        padding-top: 0;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        font-size: 16px;
+                        line-height: 25px;
+                        color: white;
+                        font-weight: 600;
+                        background-color: red;
+                        border-radius: 6px;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                        display: flex;
+                    ">
+                        {device_status}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
     with headercols[2]:
         on = st.button("Refresh")
         if on:
@@ -46,7 +105,6 @@ def unit_header(title, des=None, node_client=None, device_status_res=None):
             st.rerun()
     if des is not None:
         st.markdown(des)
-
 
 def unit_details(data):
     # res=node_client.get_valueStore(key="DEVICEINFO")
@@ -61,57 +119,96 @@ def unit_details(data):
 def cards_section(node_client=None):
     container = st.container(border=True)
     with container:
-        st.subheader(body="Parameters", anchor=False)
-        r1_cols = st.columns([1, 1], gap="small")
+        # st.subheader(body="Parameters", anchor=False)
+        res = node_client.get_valueStore(key="PlanStatus")
+        is_success = res.get("isSuccess")
+        d= res.get("value")
+        data = str(d) if d is not None else None
+        check=False
+        if is_success is True and data is not None:
+            check = True
+        r1_cols = st.columns([1, 1,1], gap="small")
         with r1_cols[0]:
-            data = node_client.get_valueStore(key="TotalUsedWater")
-            if data.get("isSuccess") is True and data.get("value") is not None:
-                value = data.get("value")
-                st.metric(label="Total Used Water", value=f"{value} L", border=True)
+            wRes = node_client.get_valueStore(key="waterConsumption")
+            if wRes.get("isSuccess") is True and wRes.get("value") is not None:
+                value = wRes.get("value")
+                st.metric(label="Water Consumption", value=f"{value:.2f} L", border=True)
             else:
                 st.error("No Data Available")
         with r1_cols[1]:
-            data = node_client.get_valueStore(key="RechargedQuantity")
-            if data.get("isSuccess") is True and data.get("value") is not None:
-                value = data.get("value")
+            if(check):
+                water_limit= float(data.split(",")[0]) if data else None
                 st.metric(
-                    label="Recharged Quantity",
-                    value=f"{value} L",
+                    label="Water Limit",
+                    value=f"{water_limit} L",
                     border=True,
                 )
             else:
                 st.error("No Data Available")
+        with r1_cols[2]:
+            if(check):
+                expiry = int(data.split(",")[1]) if data else None
+                st.metric(
+                        label="Plan Expiry Date",
+                        value=f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d')}",
+                        border=True,
+                    )
+            else:
+                st.error("No Data Available")
+
 
 
 def settings_section(node_client=None):
     container = st.container(border=True)
     with container:
-        st.subheader(body="Settings", anchor=False)
-        cols= st.columns([1, 1], gap="small")
-        with cols[0]:
-            r1_cols = st.columns([1, 1], gap="small", vertical_alignment="bottom")
+        st.header(body="Settings", anchor=False)
+        con_1=st.container(border=True)
+        with con_1:
+            st.subheader("Renew Plan", anchor=False)
+            # cols= st.columns([1, 1,1], gap="small")
+            # with cols[0]:
+            r1_cols = st.columns([1, 1,0.5], gap="small", vertical_alignment="bottom")
             with r1_cols[0]:
                 recharge = st.text_input(
-                    "Recharge Quantity (in ml)",
+                    "Recharge Quantity (in L)",
                     key="recharge_quantity",
                     value="0",
                 )
             with r1_cols[1]:
-                data = node_client.get_valueStore(key="RechargedQuantity")
+                date=st.date_input("Expiry Date", key="expiry_date", value=datetime.now() + timedelta(days=30))
+                expiry = int(datetime.strptime(str(date), "%Y-%m-%d").timestamp())+ 86400 # Adding 1 day to the epoch time
+            with r1_cols[2]:
+                data = node_client.get_valueStore(key="PlanStatus")
+                value = 0
                 if data.get("isSuccess") is True and data.get("value") is not None:
-                    value = data.get("value")
-                submit = st.button("Recharge")
+                    value_str= data.get("value")
+                    v=float(value_str.split(",")[0])
+                    value = float(v)
+                submit = st.button("Renew")
                 if submit:
                     if recharge:
-                        recharge_value = int(recharge)/1000
+                        recharge_value = float(recharge)
+                        # st.write(recharge_value)
                         if recharge_value > 0 or recharge_value < 0:
                             if value is None:
                                 st.error("Fail to get current recharge value")
                                 st.stop()
                             recharge_value = value + recharge_value
-                            node_client.set_valueStore(
-                                key="RechargedQuantity", value=recharge_value, type="float"
+                            recharge_value = round(recharge_value, 2)
+                            if(recharge_value < 1):
+                                st.toast("Water limit cannot less than 1 L")
+                                return 
+                            if(expiry < int(time.time())):
+                                st.error("Expiry date cannot be in the past")
+                                return
+                            PlanStatusPayload = f"{recharge_value},{expiry}"
+                            res= node_client.set_valueStore(
+                                key="PlanStatus", value=PlanStatusPayload, type="string"
                             )
+                            cRes= node_client.send_command("PlanStatus", data=PlanStatusPayload)
+                            if res.get("isSuccess") is False or cRes.get("isSuccess") is False:
+                                st.error("Fail to set Plan Status")
+                                st.stop()
                             st.toast("Recharge successful", icon='🎉')
                             time.sleep(1)
                             st.rerun()
@@ -120,6 +217,24 @@ def settings_section(node_client=None):
                     else:
                         st.error("Please enter a valid number")
 
+
+
+def device_parameters(node_client=None):
+    container = st.container(border=True, height=220)
+    with container:
+        st.subheader(body="Device Parameters", anchor=False)
+        # res = node_client.get_valueStore(key="PlanStatus")
+        r1_cols = st.columns([1, 1, 1, 1], gap="small")
+        with r1_cols[0]:
+            draw_custom_tile("Device Health", "50%", "red")
+        with r1_cols[1]:
+            draw_custom_tile("Motor 1 Status", "OFF")
+            
+        with r1_cols[2]:
+             draw_custom_tile("Motor 2 Status", "ON", "green")
+
+
+        
 
 def gauge_section(node_client=None):
     container = st.container(border=True, height=330)
@@ -559,7 +674,7 @@ def map_section(node_client=None):
                 use_container_width=True,
             )
         else:
-            res = node_client.get_latestData("Location")
+            res = node_client.get_latestData("location")
             if res.get("data") is not None:
                 location = res.get("data")
                 last_updated = res.get("timestamp")

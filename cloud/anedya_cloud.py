@@ -2,6 +2,8 @@ import json
 import streamlit as st
 import pandas as pd
 import pytz
+import time
+from datetime import datetime
 
 
 class Anedya:
@@ -81,6 +83,8 @@ class NewNode:
         return anedya_setValueStore(
             self.API_KEY, self.nodeId, scope, id, key, value, type
         )
+    def send_command(self, command: str, data: str = "") -> dict:
+        return anedya_sendCommand(self.API_KEY, self.nodeId, command, data)
 
 
 @st.cache_data(ttl=40, show_spinner=False)
@@ -256,6 +260,7 @@ def get_map_data(
         "Authorization": apiKey_in_formate,
     }
 
+    # print(payload)
     response = st.session_state.http_client.request(
         "POST", url, headers=headers, data=payload, timeout=10
     )
@@ -485,6 +490,51 @@ def anedya_setValueStore(
             "isSuccess": True,
         }
         print("Value Updated")
+    else:
+        print(responseMessage)
+        # st.write("No previous value!!")
+        value = {"isSuccess": False, "res": responseMessage}
+
+    return value
+
+
+def anedya_sendCommand(
+    apiKey, nodeId, command: str, data: str = ""
+) -> dict:
+    url = "https://api.anedya.io/v1/commands/send"
+    expiry = int(time.time()) + (60 * 60 * 24 * 5)  # 5 days expiry
+    expiry = int(expiry * 1000)  # Convert to milliseconds
+
+    payload = json.dumps(
+        {
+            "nodeid": nodeId,
+            "command": command,
+            "data": data,
+            "type": "string",
+            "expiry": expiry,
+        }
+    )
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {apiKey}",
+    }
+
+    response = st.session_state.http_client.request(
+        "POST", url, headers=headers, data=payload
+    )
+    responseMessage = response.text
+    print(responseMessage)
+
+    isSucess = json.loads(responseMessage).get("success")
+    commandId= json.loads(responseMessage).get("commandId")
+    if isSucess:
+        value = json.loads(responseMessage).get("value")
+        value = {
+            "isSuccess": True,
+            "commandId": commandId,
+        }
+        print("Command Sent")
     else:
         print(responseMessage)
         # st.write("No previous value!!")

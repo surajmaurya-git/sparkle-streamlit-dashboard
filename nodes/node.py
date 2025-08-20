@@ -7,6 +7,7 @@ from components.ui.unit_ui_components import controllers_section
 from components.ui.unit_ui_components import graph_section
 from components.ui.unit_ui_components import map_section
 from components.ui.unit_ui_components import settings_section
+from components.ui.unit_ui_components import device_parameters
 from cloud.anedya_cloud import Anedya
 
 import os
@@ -36,6 +37,7 @@ def draw_unit_1_dashboard():
     # gauge_section(node)
     cards_section(node)
     settings_section(node)
+    device_parameters(node)
     # controllers_section(node)
     # graph_section(node)
     map_section(node)
