@@ -27,21 +27,21 @@ def drawAdminDashboard():
                 print("Node file already exists")
 
     pages = {
-        "Admin": [
-            st.Page(
-                f"{current_dir}/users_ui/admin/sections/admin_dashboard.py",
-                title="Admin Dashboard",
-            ),
-            st.Page(
-                f"{current_dir}/users_ui/admin/sections/create_users.py",
-                title="Create Users",
+        # "Admin": [
+        #     st.Page(
+        #         f"{current_dir}/users_ui/admin/sections/admin_dashboard.py",
+        #         title="Admin Dashboard",
+        #     ),
+        #     st.Page(
+        #         f"{current_dir}/users_ui/admin/sections/create_users.py",
+        #         title="Create Users",
                 
-            ),
-            st.Page(
-                f"{current_dir}/users_ui/admin/sections/users_managements.py",
-                title="Users Managements",
-            ),
-        ],
+        #     ),
+        #     st.Page(
+        #         f"{current_dir}/users_ui/admin/sections/users_managements.py",
+        #         title="Users Managements",
+        #     ),
+        # ],
         f"{NODES_NAME}s": [
             st.Page(f"{current_dir}/nodes/{NODES_NAME}_1.py", title=f"{NODES_NAME} 1", icon="🛜", default=True) if i == 1 else
             st.Page(f"{current_dir}/nodes/{NODES_NAME}_{i}.py", title=f"{NODES_NAME} {i}", icon="🛜") for i in range(1, NUMBER_OF_NODES)
@@ -52,5 +52,6 @@ def drawAdminDashboard():
     DASHBOARD_NAME=st.secrets["DASHBOARD_NAME"]
     # st.sidebar.subheader(DASHBOARD_NAME)
     ABOUT_DASHBOARD=st.secrets["ABOUT_DASHBOARD"]
+    st.sidebar.title(DASHBOARD_NAME)
     # st.sidebar.markdown(ABOUT_DASHBOARD)
     pg.run()

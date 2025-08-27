@@ -128,6 +128,8 @@ def cards_section(node_client=None):
         if is_success is True and data is not None:
             check = True
         r1_cols = st.columns([1, 1,1], gap="small")
+        value, water_limit, expiry = -1, 0, ""
+        
         with r1_cols[0]:
             wRes = node_client.get_valueStore(key="waterConsumption")
             if wRes.get("isSuccess") is True and wRes.get("value") is not None:
@@ -155,6 +157,8 @@ def cards_section(node_client=None):
                     )
             else:
                 st.error("No Data Available")
+        if(value>=water_limit):
+            st.warning("Water limit has been reached. Please recharge to continue using the service.", icon="🚨")
 
 
 
@@ -217,8 +221,6 @@ def settings_section(node_client=None):
                     else:
                         st.error("Please enter a valid number")
 
-
-
 def device_parameters(node_client=None):
     container = st.container(border=True, height=220)
     with container:
@@ -226,15 +228,14 @@ def device_parameters(node_client=None):
         # res = node_client.get_valueStore(key="PlanStatus")
         r1_cols = st.columns([1, 1, 1, 1], gap="small")
         with r1_cols[0]:
-            draw_custom_tile("Device Health", "50%", "red")
+            draw_custom_tile("Device Health", "100%", "green")
         with r1_cols[1]:
-            draw_custom_tile("Motor 1 Status", "OFF")
+            draw_custom_tile("Motor", "OFF")
             
-        with r1_cols[2]:
-             draw_custom_tile("Motor 2 Status", "ON", "green")
+        # with r1_cols[2]:
+        #      draw_custom_tile("Motor 2 Status", "ON", "green")
 
 
-        
 
 def gauge_section(node_client=None):
     container = st.container(border=True, height=330)
