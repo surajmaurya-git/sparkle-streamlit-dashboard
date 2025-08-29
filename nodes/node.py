@@ -36,7 +36,7 @@ def draw_unit_1_dashboard():
     unit_details(NODE_ID)
     # gauge_section(node)
     cards_section(node)
-    settings_section(node)
+    settings_section(node, device_status_res)
     device_parameters(node)
     # controllers_section(node)
     # graph_section(node)

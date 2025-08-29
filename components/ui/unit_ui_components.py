@@ -29,8 +29,8 @@ def unit_header(title, des=None, node_client=None, device_status_res=None):
     with headercols[0]:
         st.title(title, anchor=False)
     with headercols[1]:
+        device_status = None
         if device_status_res is not None or device_status_res.get("status") is True:
-            device_status = None
             if device_status_res.get("device_status"):
                 device_status = "Online"
             else:
@@ -131,7 +131,7 @@ def cards_section(node_client=None):
         value, water_limit, expiry = -1, 0, ""
         
         with r1_cols[0]:
-            wRes = node_client.get_valueStore(key="waterConsumption")
+            wRes = node_client.get_valueStore(key="WaterCons")
             if wRes.get("isSuccess") is True and wRes.get("value") is not None:
                 value = wRes.get("value")
                 st.metric(label="Water Consumption", value=f"{value:.2f} L", border=True)
@@ -157,12 +157,12 @@ def cards_section(node_client=None):
                     )
             else:
                 st.error("No Data Available")
-        if(value>=water_limit):
-            st.warning("Water limit has been reached. Please recharge to continue using the service.", icon="🚨")
+        if(value>=water_limit and water_limit!=0 ):
+            st.warning("Water limit has been reached.", icon="🚨")
 
 
 
-def settings_section(node_client=None):
+def settings_section(node_client=None, device_status_res=None):
     container = st.container(border=True)
     with container:
         st.header(body="Settings", anchor=False)
@@ -171,7 +171,7 @@ def settings_section(node_client=None):
             st.subheader("Renew Plan", anchor=False)
             # cols= st.columns([1, 1,1], gap="small")
             # with cols[0]:
-            r1_cols = st.columns([1, 1,0.5], gap="small", vertical_alignment="bottom")
+            r1_cols = st.columns([1, 1,0.2,0.2], gap="small", vertical_alignment="bottom", )
             with r1_cols[0]:
                 recharge = st.text_input(
                     "Recharge Quantity (in L)",
@@ -199,9 +199,9 @@ def settings_section(node_client=None):
                                 st.stop()
                             recharge_value = value + recharge_value
                             recharge_value = round(recharge_value, 2)
-                            if(recharge_value < 1):
-                                st.toast("Water limit cannot less than 1 L")
-                                return 
+                            # if(recharge_value < 1):
+                            #     st.toast("Water limit cannot less than 1 L")
+                            #     return 
                             if(expiry < int(time.time())):
                                 st.error("Expiry date cannot be in the past")
                                 return
@@ -220,6 +220,26 @@ def settings_section(node_client=None):
                             st.toast("Please enter a valid recharge quantity")
                     else:
                         st.error("Please enter a valid number")
+                   
+            with r1_cols[3]:
+                reset=st.button("Reset") 
+                if reset:
+                    current_time = int(time.time())
+                    PlanStatusPayload = f"0,{current_time}"
+                    res= node_client.set_valueStore(
+                        key="PlanStatus", value=PlanStatusPayload, type="string"
+                    )
+                    cRes= node_client.send_command("PlanStatus", data=PlanStatusPayload)
+                    wlRes=node_client.set_valueStore(
+                        key="WaterCons", value=0, type="float"
+                    )
+                    if res.get("isSuccess") is False or cRes.get("isSuccess") is False or wlRes.get("isSuccess") is False:
+                        st.error("Fail to set Plan Status")
+                        st.stop()
+                    st.toast("Reset the plan")
+                    time.sleep(1)
+                    st.rerun()
+
 
 def device_parameters(node_client=None):
     container = st.container(border=True, height=220)
