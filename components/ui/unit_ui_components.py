@@ -249,8 +249,8 @@ def device_parameters(node_client=None):
         r1_cols = st.columns([1, 1, 1, 1], gap="small")
         with r1_cols[0]:
             draw_custom_tile("Device Health", "100%", "green")
-        with r1_cols[1]:
-            draw_custom_tile("Motor", "OFF")
+        # with r1_cols[1]:
+        #     draw_custom_tile("Pump", "OFF")
             
         # with r1_cols[2]:
         #      draw_custom_tile("Motor 2 Status", "ON", "green")
