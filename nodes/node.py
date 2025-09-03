@@ -47,11 +47,11 @@ def draw_unit_1_dashboard():
     # fetch water consumption
     wRes = node.get_valueStore(key="WaterCons")
     if wRes.get("isSuccess") is True and wRes.get("value") is not None:
-         values["water_consumption"] = wRes.get("value")
+         values["water_consumption"] = float(wRes.get("value"))
 
     # Left water limit
     if(values["water_limit"] is not None and values["water_consumption"] is not None):
-        values["left_water_limit"] = int(int(values["water_limit"]) - int(values["water_consumption"]))
+        values["left_water_limit"] = values["water_limit"] - values["water_consumption"]
 
     # Fetch tds 1 value
     tds1Res=node.get_latestData("tds1")
