@@ -264,7 +264,13 @@ def settings_section(node_client=None, values: dict = {}):
                     wlRes = node_client.set_valueStore(
                         key="WaterCons", value=0, type="float"
                     )
-                    if res.get("isSuccess") is False or wlRes.get("isSuccess") is False:
+                    syncRes = node_client.set_valueStore(
+                                "IsPlanSync", value=False, type="boolean"
+                            )
+                    if syncRes.get("isSuccess") is False:
+                                st.toast("Fail to set IsPlanSync", icon="🚫")
+                                st.stop()
+                    if res.get("isSuccess") is False or wlRes.get("isSuccess") is False or syncRes.get("isSuccess") is False:
                         st.error("Fail to set Plan Status")
                         st.stop()
                     st.toast("Reset the plan")
