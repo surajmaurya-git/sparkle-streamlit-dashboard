@@ -25,7 +25,8 @@ def draw_unit_1_dashboard():
         st.stop()
 
     anedya = Anedya()
-    NODE_ID = st.session_state.nodesId[f"node_{NODE_NUMBER}"]
+    NODE_ID = st.session_state.nodesId[f"node_{NODE_NUMBER}"].get("id")
+    NODE_NAME=st.session_state.nodesId[f"node_{NODE_NUMBER}"].get("name")
     node = anedya.new_node(st.session_state.anedya_client, nodeId=NODE_ID)
     device_status_res = node.get_deviceStatus()
     values={"water_limit":None,"expiry":None,"water_consumption":None, "left_water_limit": None, "tds_1":None, "tds_2": None} 
@@ -63,7 +64,7 @@ def draw_unit_1_dashboard():
         values["tds_2"] = tds2Res.get("data")
 
     unit_header(
-        f"{pre_name} {NODE_NUMBER}",
+        f"{NODE_NAME}",
         node_client=node,
         device_status_res=device_status_res,
     )

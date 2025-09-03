@@ -19,8 +19,6 @@ from components.custome_component import draw_custom_tile
 is_options_changed = False
 
 
-
-
 def unit_header(title, des=None, node_client=None, device_status_res=None):
     if title is None:
         st.error("Please provide a valid title.")
@@ -106,6 +104,7 @@ def unit_header(title, des=None, node_client=None, device_status_res=None):
     if des is not None:
         st.markdown(des)
 
+
 def unit_details(data):
     # res=node_client.get_valueStore(key="DEVICEINFO")
     # st.write(res)
@@ -120,75 +119,80 @@ def cards_section(node_client=None, values: dict = {}):
     container = st.container(border=True, height=150)
     with container:
         # st.subheader(body="Parameters", anchor=False)
-        r1_cols = st.columns([1, 1,1,1 ], gap="large")
+        r1_cols = st.columns([1, 1, 1, 1], gap="large")
         with r1_cols[0]:
             left_water_limit = values["left_water_limit"]
-            if(left_water_limit is not None):
+            if left_water_limit is not None:
                 if left_water_limit <= 0:
                     draw_custom_tile("Left Water Limit", f"{left_water_limit} L", "red")
                 else:
-                    draw_custom_tile("Left Water Limit", f"{left_water_limit} L", "white")
+                    draw_custom_tile(
+                        "Left Water Limit", f"{left_water_limit} L", "white"
+                    )
             else:
                 draw_custom_tile("Left Water Limit", "N/A", "red")
         with r1_cols[1]:
             tds_1 = values["tds_1"]
-            if(tds_1 is not None):
-                tds_1=round(tds_1)
+            if tds_1 is not None:
+                tds_1 = round(tds_1)
                 draw_custom_tile("TDS 1", f"{tds_1} ppm", "white")
             # else:
             #     draw_custom_tile("TDS 1", "N/A", "red")
         with r1_cols[2]:
             tds_2 = values["tds_2"]
-            if(tds_2 is not None):
-                tds_2=round(tds_2)
+            if tds_2 is not None:
+                tds_2 = round(tds_2)
                 draw_custom_tile("TDS 2", f"{tds_2} ppm", "white")
             # else:
             #     draw_custom_tile("TDS 2", "N/A", "red")
-        
-       
-
 
 
 def settings_section(node_client=None, values: dict = {}):
     container = st.container(border=True, height=430)
     with container:
         st.header(body="Subscription Management", anchor=False)
-        r1_cols = st.columns([1, 1,1,1], gap="large")
+        r1_cols = st.columns([1, 1, 1, 1], gap="large")
         value, water_limit, expiry = -1, 0, ""
-        
+
         with r1_cols[0]:
             value = values["water_consumption"]
-            if(value is not None):
+            if value is not None:
                 draw_custom_tile("Water Consumption", f"{value:.2f} L", "white")
             else:
                 draw_custom_tile("Water Consumption", f"N/A", "white")
         with r1_cols[1]:
-            water_limit= values["water_limit"]
-            if(water_limit is not None):
+            water_limit = values["water_limit"]
+            if water_limit is not None:
                 draw_custom_tile("Water Limit", f"{water_limit} L", "white")
-                
+
             else:
                 draw_custom_tile("Water Limit", f"N/A", "white")
 
         with r1_cols[2]:
             expiry = values["expiry"]
-            if(expiry is not None):
-                draw_custom_tile("Plan Expiry Date", f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d')}", "white")
+            if expiry is not None:
+                draw_custom_tile(
+                    "Plan Expiry Date",
+                    f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d')}",
+                    "white",
+                )
             else:
                 draw_custom_tile("Plan Expiry Date", f"N/A", "white")
 
-        if (water_limit is not None):
-            if(value>=water_limit and water_limit!=0 ):
+        if water_limit is not None:
+            if value >= water_limit and water_limit != 0:
                 st.warning("Water limit has been reached.", icon="🚨")
 
-
-
-        con_1=st.container(border=True)
+        con_1 = st.container(border=True)
         with con_1:
             st.subheader("Renew Plan", anchor=False)
             # cols= st.columns([1, 1,1], gap="small")
             # with cols[0]:
-            r1_cols = st.columns([1, 1,0.2,0.2], gap="small", vertical_alignment="bottom", )
+            r1_cols = st.columns(
+                [1, 1, 0.2, 0.2, 0.15],
+                gap="small",
+                vertical_alignment="bottom",
+            )
             with r1_cols[0]:
                 recharge = st.text_input(
                     "Recharge Quantity (in L)",
@@ -196,14 +200,20 @@ def settings_section(node_client=None, values: dict = {}):
                     value="0",
                 )
             with r1_cols[1]:
-                date=st.date_input("Expiry Date", key="expiry_date", value=datetime.now() + timedelta(days=30))
-                expiry = int(datetime.strptime(str(date), "%Y-%m-%d").timestamp())+ 86400 # Adding 1 day to the epoch time
+                date = st.date_input(
+                    "Expiry Date",
+                    key="expiry_date",
+                    value=datetime.now() + timedelta(days=30),
+                )
+                expiry = (
+                    int(datetime.strptime(str(date), "%Y-%m-%d").timestamp()) + 86400
+                )  # Adding 1 day to the epoch time
             with r1_cols[2]:
                 data = node_client.get_valueStore(key="PlanStatus")
                 value = 0
                 if data.get("isSuccess") is True and data.get("value") is not None:
-                    value_str= data.get("value")
-                    v=float(value_str.split(",")[0])
+                    value_str = data.get("value")
+                    v = float(value_str.split(",")[0])
                     value = float(v)
                 submit = st.button("Renew")
                 if submit:
@@ -216,43 +226,74 @@ def settings_section(node_client=None, values: dict = {}):
                                 st.stop()
                             recharge_value = value + recharge_value
                             recharge_value = round(recharge_value, 2)
-                            if(expiry < int(time.time())):
+                            if expiry < int(time.time()):
                                 st.toast("Expiry date cannot be in the past", icon="🚫")
                                 return
                             PlanStatusPayload = f"{recharge_value},{expiry}"
-                            res= node_client.set_valueStore(
+                            res = node_client.set_valueStore(
                                 key="PlanStatus", value=PlanStatusPayload, type="string"
                             )
-                            cRes= node_client.send_command("PlanStatus", data=PlanStatusPayload)
-                            if res.get("isSuccess") is False or cRes.get("isSuccess") is False:
-                                st.error("Fail to set Plan Status")
+
+                            if res.get("isSuccess") is False:
+                                st.toast("Fail to set Plan Status", icon="🚫")
                                 st.stop()
-                            st.toast("Recharge successful", icon='🎉')
+                            syncRes = node_client.set_valueStore(
+                                "IsPlanSync", value=False, type="boolean"
+                            )
+                            if syncRes.get("isSuccess") is False:
+                                st.toast("Fail to set IsPlanSync", icon="🚫")
+                                st.stop()
+
+                            st.toast("Recharge successful", icon="🎉")
                             time.sleep(1)
                             st.rerun()
                         else:
                             st.toast("Please enter a valid recharge quantity")
                     else:
                         st.error("Please enter a valid number")
-                   
+
             with r1_cols[3]:
-                reset=st.button("Reset") 
+                reset = st.button("Reset")
                 if reset:
                     current_time = int(time.time())
                     PlanStatusPayload = f"0,{current_time}"
-                    res= node_client.set_valueStore(
+                    res = node_client.set_valueStore(
                         key="PlanStatus", value=PlanStatusPayload, type="string"
                     )
-                    cRes= node_client.send_command("PlanStatus", data=PlanStatusPayload)
-                    wlRes=node_client.set_valueStore(
+
+                    wlRes = node_client.set_valueStore(
                         key="WaterCons", value=0, type="float"
                     )
-                    if res.get("isSuccess") is False or cRes.get("isSuccess") is False or wlRes.get("isSuccess") is False:
+                    if res.get("isSuccess") is False or wlRes.get("isSuccess") is False:
                         st.error("Fail to set Plan Status")
                         st.stop()
                     st.toast("Reset the plan")
                     time.sleep(1)
                     st.rerun()
+            with r1_cols[4]:
+                plan_sync_status = node_client.get_valueStore(key="IsPlanSync")
+                if (
+                    plan_sync_status.get("isSuccess") is True
+                    and plan_sync_status.get("value") is not None
+                ):
+                    value = plan_sync_status.get("value")
+                    if value == True:
+                        # st.markdown("🔄")
+                        st.markdown(
+                            f"""
+                        <div style="font-size: 30px; 
+                                 margin-bottom: 12px;">✅</div>
+                                """,
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown(
+                            f"""
+                        <div style="font-size: 30px; 
+                                 margin-bottom: 12px;">⏳</div>
+                                """,
+                            unsafe_allow_html=True,
+                        )
 
 
 def device_parameters(node_client=None):
@@ -265,10 +306,9 @@ def device_parameters(node_client=None):
             draw_custom_tile("Device Health", "100%", "green")
         # with r1_cols[1]:
         #     draw_custom_tile("Pump", "OFF")
-            
+
         # with r1_cols[2]:
         #      draw_custom_tile("Motor 2 Status", "ON", "green")
-
 
 
 def gauge_section(node_client=None):
