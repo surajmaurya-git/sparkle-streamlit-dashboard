@@ -189,7 +189,7 @@ def settings_section(node_client=None, values: dict = {}):
             # cols= st.columns([1, 1,1], gap="small")
             # with cols[0]:
             r1_cols = st.columns(
-                [1, 1, 0.2, 0.2, 0.15],
+                [1, 1, 0.22, 0.2, 0.15],
                 gap="small",
                 vertical_alignment="bottom",
             )
