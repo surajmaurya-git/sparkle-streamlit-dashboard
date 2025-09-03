@@ -148,7 +148,7 @@ def cards_section(node_client=None, values: dict = {}):
 
 
 def settings_section(node_client=None, values: dict = {}):
-    container = st.container(border=True, height=430)
+    container = st.container(border=True, height=470)
     with container:
         st.header(body="Subscription Management", anchor=False)
         r1_cols = st.columns([1, 1, 1, 1], gap="large")
@@ -217,40 +217,46 @@ def settings_section(node_client=None, values: dict = {}):
                     value = float(v)
                 submit = st.button("Renew")
                 if submit:
-                    if recharge:
-                        recharge_value = float(recharge)
-                        # st.write(recharge_value)
-                        if recharge_value > 0 or recharge_value < 0:
+                    try:
+                        if recharge:
+                            
+                            recharge_value = float(recharge)
                             if value is None:
                                 st.error("Fail to get current recharge value")
                                 st.stop()
                             recharge_value = value + recharge_value
                             recharge_value = round(recharge_value, 2)
-                            if expiry < int(time.time()):
-                                st.toast("Expiry date cannot be in the past", icon="🚫")
-                                return
-                            PlanStatusPayload = f"{recharge_value},{expiry}"
-                            res = node_client.set_valueStore(
-                                key="PlanStatus", value=PlanStatusPayload, type="string"
-                            )
+                            if recharge_value >=0:
+                                if expiry < int(time.time()):
+                                    st.toast("Expiry date cannot be in the past", icon="🚫")
+                                    return
+                                PlanStatusPayload = f"{recharge_value},{expiry}"
+                                res = node_client.set_valueStore(
+                                    key="PlanStatus", value=PlanStatusPayload, type="string"
+                                )
 
-                            if res.get("isSuccess") is False:
-                                st.toast("Fail to set Plan Status", icon="🚫")
-                                st.stop()
-                            syncRes = node_client.set_valueStore(
-                                "IsPlanSync", value=False, type="boolean"
-                            )
-                            if syncRes.get("isSuccess") is False:
-                                st.toast("Fail to set IsPlanSync", icon="🚫")
-                                st.stop()
+                                if res.get("isSuccess") is False:
+                                    st.toast("Fail to set Plan Status", icon="🚫")
+                                    st.stop()
+                                syncRes = node_client.set_valueStore(
+                                    "IsPlanSync", value=False, type="boolean"
+                                )
+                                if syncRes.get("isSuccess") is False:
+                                    st.toast("Fail to set IsPlanSync", icon="🚫")
+                                    st.stop()
 
-                            st.toast("Recharge successful", icon="🎉")
-                            time.sleep(1)
-                            st.rerun()
+                                st.toast("Recharge successful", icon="🎉")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.toast("Recharge value cannot be negative", icon="🚫")
+                            
                         else:
-                            st.toast("Please enter a valid recharge quantity")
-                    else:
-                        st.error("Please enter a valid number")
+                            st.toast("Please enter a valid number", icon="🚫")
+                    except ValueError:
+                            st.toast("Recharge value must be a float or int", icon="🚫")
+                            # st.stop()
+                    
 
             with r1_cols[3]:
                 reset = st.button("Reset")
@@ -273,7 +279,7 @@ def settings_section(node_client=None, values: dict = {}):
                     if res.get("isSuccess") is False or wlRes.get("isSuccess") is False or syncRes.get("isSuccess") is False:
                         st.error("Fail to set Plan Status")
                         st.stop()
-                    st.toast("Reset the plan")
+                    st.toast("Reset the plan", icon="🎉")
                     time.sleep(1)
                     st.rerun()
             with r1_cols[4]:
