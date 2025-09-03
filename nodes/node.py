@@ -28,18 +28,55 @@ def draw_unit_1_dashboard():
     NODE_ID = st.session_state.nodesId[f"node_{NODE_NUMBER}"]
     node = anedya.new_node(st.session_state.anedya_client, nodeId=NODE_ID)
     device_status_res = node.get_deviceStatus()
+    values={"water_limit":None,"expiry":None,"water_consumption":None, "left_water_limit": None, "tds_1":None, "tds_2": None} 
+
+    # fetch plan status
+    res = node.get_valueStore(key="PlanStatus")
+    is_success = res.get("isSuccess")
+    d= res.get("value")
+    data = str(d) if d is not None else None
+    if is_success is True and data is not None:
+        data_list = data.split(",")
+        if len(data_list) == 2:
+            values["water_limit"] = float(data_list[0])
+            values["expiry"] =int( data_list[1])
+        else:
+            st.error("Invalid data format")
+    
+    # fetch water consumption
+    wRes = node.get_valueStore(key="WaterCons")
+    if wRes.get("isSuccess") is True and wRes.get("value") is not None:
+         values["water_consumption"] = wRes.get("value")
+
+    # Left water limit
+    if(values["water_limit"] is not None and values["water_consumption"] is not None):
+        values["left_water_limit"] = int(int(values["water_limit"]) - int(values["water_consumption"]))
+
+    # Fetch tds 1 value
+    tds1Res=node.get_latestData("tds1")
+    if tds1Res.get("isSuccess") is True and tds1Res.get("data") is not None:
+        values["tds_1"] = tds1Res.get("data")
+
+    # Fetch tds 2 value
+    tds2Res=node.get_latestData("tds2")
+    if tds2Res.get("isSuccess") is True and tds2Res.get("data") is not None:
+        values["tds_2"] = tds2Res.get("data")
+
     unit_header(
         f"{pre_name} {NODE_NUMBER}",
         node_client=node,
         device_status_res=device_status_res,
     )
+
+
+    # Plot the dashboard
     unit_details(NODE_ID)
     # gauge_section(node)
-    cards_section(node)
-    settings_section(node, device_status_res)
+    cards_section(node, values)
+    settings_section(node, values)
     device_parameters(node)
     # controllers_section(node)
-    # graph_section(node)
+    graph_section(node)
     map_section(node)
 
 

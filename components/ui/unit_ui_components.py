@@ -116,56 +116,73 @@ def unit_details(data):
     # st.text(f"IMEI No.: {data.get('imei_id')}")
 
 
-def cards_section(node_client=None):
-    container = st.container(border=True)
+def cards_section(node_client=None, values: dict = {}):
+    container = st.container(border=True, height=150)
     with container:
         # st.subheader(body="Parameters", anchor=False)
-        res = node_client.get_valueStore(key="PlanStatus")
-        is_success = res.get("isSuccess")
-        d= res.get("value")
-        data = str(d) if d is not None else None
-        check=False
-        if is_success is True and data is not None:
-            check = True
-        r1_cols = st.columns([1, 1,1], gap="small")
+        r1_cols = st.columns([1, 1,1,1 ], gap="large")
+        with r1_cols[0]:
+            left_water_limit = values["left_water_limit"]
+            if(left_water_limit is not None):
+                if left_water_limit <= 0:
+                    draw_custom_tile("Left Water Limit", f"{left_water_limit} L", "red")
+                else:
+                    draw_custom_tile("Left Water Limit", f"{left_water_limit} L", "white")
+            else:
+                draw_custom_tile("Left Water Limit", "N/A", "red")
+        with r1_cols[1]:
+            tds_1 = values["tds_1"]
+            if(tds_1 is not None):
+                tds_1=round(tds_1)
+                draw_custom_tile("TDS 1", f"{tds_1} ppm", "white")
+            # else:
+            #     draw_custom_tile("TDS 1", "N/A", "red")
+        with r1_cols[2]:
+            tds_2 = values["tds_2"]
+            if(tds_2 is not None):
+                tds_2=round(tds_2)
+                draw_custom_tile("TDS 2", f"{tds_2} ppm", "white")
+            # else:
+            #     draw_custom_tile("TDS 2", "N/A", "red")
+        
+       
+
+
+
+def settings_section(node_client=None, values: dict = {}):
+    container = st.container(border=True, height=430)
+    with container:
+        st.header(body="Subscription Management", anchor=False)
+        r1_cols = st.columns([1, 1,1,1], gap="large")
         value, water_limit, expiry = -1, 0, ""
         
         with r1_cols[0]:
-            wRes = node_client.get_valueStore(key="WaterCons")
-            if wRes.get("isSuccess") is True and wRes.get("value") is not None:
-                value = wRes.get("value")
-                st.metric(label="Water Consumption", value=f"{value:.2f} L", border=True)
+            value = values["water_consumption"]
+            if(value is not None):
+                draw_custom_tile("Water Consumption", f"{value:.2f} L", "white")
             else:
-                st.error("No Data Available")
+                draw_custom_tile("Water Consumption", f"N/A", "white")
         with r1_cols[1]:
-            if(check):
-                water_limit= float(data.split(",")[0]) if data else None
-                st.metric(
-                    label="Water Limit",
-                    value=f"{water_limit} L",
-                    border=True,
-                )
+            water_limit= values["water_limit"]
+            if(water_limit is not None):
+                draw_custom_tile("Water Limit", f"{water_limit} L", "white")
+                
             else:
-                st.error("No Data Available")
+                draw_custom_tile("Water Limit", f"N/A", "white")
+
         with r1_cols[2]:
-            if(check):
-                expiry = int(data.split(",")[1]) if data else None
-                st.metric(
-                        label="Plan Expiry Date",
-                        value=f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d')}",
-                        border=True,
-                    )
+            expiry = values["expiry"]
+            if(expiry is not None):
+                draw_custom_tile("Plan Expiry Date", f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d')}", "white")
             else:
-                st.error("No Data Available")
-        if(value>=water_limit and water_limit!=0 ):
-            st.warning("Water limit has been reached.", icon="🚨")
+                draw_custom_tile("Plan Expiry Date", f"N/A", "white")
+
+        if (water_limit is not None):
+            if(value>=water_limit and water_limit!=0 ):
+                st.warning("Water limit has been reached.", icon="🚨")
 
 
 
-def settings_section(node_client=None, device_status_res=None):
-    container = st.container(border=True)
-    with container:
-        st.header(body="Settings", anchor=False)
         con_1=st.container(border=True)
         with con_1:
             st.subheader("Renew Plan", anchor=False)
@@ -199,11 +216,8 @@ def settings_section(node_client=None, device_status_res=None):
                                 st.stop()
                             recharge_value = value + recharge_value
                             recharge_value = round(recharge_value, 2)
-                            # if(recharge_value < 1):
-                            #     st.toast("Water limit cannot less than 1 L")
-                            #     return 
                             if(expiry < int(time.time())):
-                                st.error("Expiry date cannot be in the past")
+                                st.toast("Expiry date cannot be in the past", icon="🚫")
                                 return
                             PlanStatusPayload = f"{recharge_value},{expiry}"
                             res= node_client.set_valueStore(
