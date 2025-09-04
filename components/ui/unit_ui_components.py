@@ -124,13 +124,14 @@ def cards_section(node_client=None, values: dict = {}):
             left_water_limit = values["left_water_limit"]
             if left_water_limit is not None:
                 if left_water_limit <= 0:
-                    draw_custom_tile("Left Water Limit", f"{left_water_limit} L", "red")
+                    left_water_limit = int(left_water_limit)
+                    draw_custom_tile("Remaining Water", f"{left_water_limit} L", "red")
                 else:
                     draw_custom_tile(
-                        "Left Water Limit", f"{left_water_limit} L", "white"
+                        "Remaining Water", f"{left_water_limit} L", "white"
                     )
             else:
-                draw_custom_tile("Left Water Limit", "N/A", "red")
+                draw_custom_tile("Remaining Water", "N/A", "red")
         with r1_cols[1]:
             tds_1 = values["tds_1"]
             if tds_1 is not None:
@@ -189,8 +190,8 @@ def settings_section(node_client=None, values: dict = {}):
             # cols= st.columns([1, 1,1], gap="small")
             # with cols[0]:
             r1_cols = st.columns(
-                [1, 1, 0.22, 0.2, 0.15],
-                gap="small",
+                [1, 1, 0.26, 0.26, 0.14],
+                # gap="none",
                 vertical_alignment="bottom",
             )
             with r1_cols[0]:
