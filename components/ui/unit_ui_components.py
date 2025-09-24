@@ -158,9 +158,9 @@ def settings_section(node_client=None, values: dict = {}):
         with r1_cols[0]:
             value = values["water_consumption"]
             if value is not None:
-                draw_custom_tile("Water Consumption", f"{value:.2f} L", "white")
+                draw_custom_tile("Total Water Consumption", f"{value:.2f} L", "white")
             else:
-                draw_custom_tile("Water Consumption", f"N/A", "white")
+                draw_custom_tile("Total Water Consumption", f"N/A", "white")
         with r1_cols[1]:
             water_limit = values["water_limit"]
             if water_limit is not None:
@@ -232,11 +232,13 @@ def settings_section(node_client=None, values: dict = {}):
                                     st.toast("Expiry date cannot be in the past", icon="🚫")
                                     return
                                 PlanStatusPayload = f"{recharge_value},{expiry}"
+
                                 res = node_client.set_valueStore(
                                     key="PlanStatus", value=PlanStatusPayload, type="string"
                                 )
+                                cmd_res=node_client.send_command("PlanStatus", PlanStatusPayload)
 
-                                if res.get("isSuccess") is False:
+                                if res.get("isSuccess") is False or cmd_res.get("isSuccess")==False:
                                     st.toast("Fail to set Plan Status", icon="🚫")
                                     st.stop()
                                 syncRes = node_client.set_valueStore(
