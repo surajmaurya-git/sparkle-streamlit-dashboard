@@ -17,4 +17,4 @@ pytz
 requests
 streamlit-autorefresh
 streamviz
-google-cloud             <0.34.0
+# google-cloud             <0.34.0

@@ -25,28 +25,29 @@ def drawAdminDashboard():
                     fp.write(file_content)
             else:
                 print("Node file already exists")
-
-    pages = {
-        # "Admin": [
-        #     st.Page(
-        #         f"{current_dir}/users_ui/admin/sections/admin_dashboard.py",
-        #         title="Admin Dashboard",
-        #     ),
-        #     st.Page(
-        #         f"{current_dir}/users_ui/admin/sections/create_users.py",
-        #         title="Create Users",
-                
-        #     ),
-        #     st.Page(
-        #         f"{current_dir}/users_ui/admin/sections/users_managements.py",
-        #         title="Users Managements",
-        #     ),
-        # ],
-        f"{NODES_NAME}s": [
-            st.Page(f"{current_dir}/nodes/{NODES_NAME}_1.py", title=f"{NODES_NAME} 1", icon="🛜", default=True) if i == 1 else
-            st.Page(f"{current_dir}/nodes/{NODES_NAME}_{i}.py", title=f"{NODES_NAME} {i}", icon="🛜") for i in range(1, NUMBER_OF_NODES)
-        ],
-    }
+    if (st.session_state.view_role == "super-admin"):
+        pages = {
+            "Admin": [
+                st.Page(
+                    f"{current_dir}/users_ui/admin/sections/admin_dashboard.py",
+                    title="Admin Dashboard",
+                    default=True,
+                    icon="",
+                ) 
+            ],
+            f"{NODES_NAME}s": [
+                st.Page(f"{current_dir}/nodes/{NODES_NAME}_1.py", title=f"{NODES_NAME} 1", icon="🛜") if i == 1 else
+                st.Page(f"{current_dir}/nodes/{NODES_NAME}_{i}.py", title=f"{NODES_NAME} {i}", icon="🛜") for i in range(1, NUMBER_OF_NODES)
+            ],
+        }
+    else:
+        pages = {
+            f"{NODES_NAME}s": [
+                st.Page(f"{current_dir}/nodes/{NODES_NAME}_1.py", title=f"{NODES_NAME} 1", icon="🛜", default=True) if i == 1 else
+                st.Page(f"{current_dir}/nodes/{NODES_NAME}_{i}.py", title=f"{NODES_NAME} {i}", icon="🛜") for i in range(1, NUMBER_OF_NODES)
+            ],
+        }
+        
     pg = st.navigation(pages)
     # st.logo(f"{current_dir}/images/logo.png", size="large")
     DASHBOARD_NAME=st.secrets["DASHBOARD_NAME"]

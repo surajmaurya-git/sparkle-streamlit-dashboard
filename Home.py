@@ -35,7 +35,7 @@ def main():
         project_setup()
         drawLogin()
     else:
-        if st.session_state.view_role == "admin":
+        if st.session_state.view_role == "admin" or st.session_state.view_role == "super-admin":
             drawAdminDashboard()
         else:
             drawUsersDashboard()
@@ -85,6 +85,10 @@ def drawLogin():
             
 
 def check_credentials(username,password):
+    if username == st.secrets["SUPER_ADMIN_EMAIL"] and password == st.secrets["SUPER_ADMIN_CRED"]:
+        st.session_state.view_role = "super-admin"
+        st.session_state.LoggedIn = True
+        st.rerun()
     if username == st.secrets["ADMIN_EMAIL"] and password == st.secrets["ADMIN_CRED"]:
         st.session_state.view_role = "admin"
         st.session_state.LoggedIn = True
