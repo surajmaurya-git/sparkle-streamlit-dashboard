@@ -180,7 +180,7 @@ def settings_section(node_client=None, values: dict = {}):
             else:
                 draw_custom_tile("Plan Expiry Date", f"N/A", "white")
 
-        if water_limit is not None:
+        if water_limit is not None and value is not None:
             if value >= water_limit and water_limit != 0:
                 st.warning("Water limit has been reached.", icon="🚨")
 
