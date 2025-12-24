@@ -125,10 +125,10 @@ def cards_section(node_client=None, values: dict = {}):
             if left_water_limit is not None:
                 if left_water_limit <= 0:
                     left_water_limit = int(left_water_limit)
-                    draw_custom_tile("Remaining Water", f"{left_water_limit} L", "red")
+                    draw_custom_tile("Remaining Water", f"{left_water_limit:.2f} L", "red")
                 else:
                     draw_custom_tile(
-                        "Remaining Water", f"{left_water_limit} L", "white"
+                        "Remaining Water", f"{left_water_limit:.2f} L", "white"
                     )
             else:
                 draw_custom_tile("Remaining Water", "N/A", "red")

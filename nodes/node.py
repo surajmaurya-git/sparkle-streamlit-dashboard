@@ -53,15 +53,17 @@ def draw_unit_1_dashboard():
     if(values["water_limit"] is not None and values["water_consumption"] is not None):
         values["left_water_limit"] = values["water_limit"] - values["water_consumption"]
 
-    # Fetch tds 1 value
-    tds1Res=node.get_latestData("tds1")
-    if tds1Res.get("isSuccess") is True and tds1Res.get("data") is not None:
-        values["tds_1"] = tds1Res.get("data")
+    is_tds=st.session_state.nodesId[f"node_{NODE_NUMBER}"].get("tds")
+    if is_tds:
+        # Fetch tds 1 value
+        tds1Res=node.get_latestData("tds1")
+        if tds1Res.get("isSuccess") is True and tds1Res.get("data") is not None:
+            values["tds_1"] = tds1Res.get("data")
 
-    # Fetch tds 2 value
-    tds2Res=node.get_latestData("tds2")
-    if tds2Res.get("isSuccess") is True and tds2Res.get("data") is not None:
-        values["tds_2"] = tds2Res.get("data")
+        # Fetch tds 2 value
+        tds2Res=node.get_latestData("tds2")
+        if tds2Res.get("isSuccess") is True and tds2Res.get("data") is not None:
+            values["tds_2"] = tds2Res.get("data")
 
     unit_header(
         f"{NODE_NAME}",
