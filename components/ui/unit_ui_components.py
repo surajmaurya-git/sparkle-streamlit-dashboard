@@ -5,6 +5,7 @@ import pytz
 import numpy as np
 import pandas as pd
 import time
+from dateutil import relativedelta
 from components.charts import draw_chart
 from components.ui.time_range_controller import (
     get_default_time_range,
@@ -139,17 +140,28 @@ def cards_section(node_client=None, values: dict = {}):
                 draw_custom_tile("TDS 1", f"{tds_1} ppm", "white")
             # else:
             #     draw_custom_tile("TDS 1", "N/A", "red")
+        # with r1_cols[2]:
+        #     tds_2 = values["tds_2"]
+        #     if tds_2 is not None:
+        #         tds_2 = round(tds_2)
+        #         draw_custom_tile("TDS 2", f"{tds_2} ppm", "white")
+        #     # else:
+        
+        #     #     draw_custom_tile("TDS 2", "N/A", "red")
         with r1_cols[2]:
-            tds_2 = values["tds_2"]
-            if tds_2 is not None:
-                tds_2 = round(tds_2)
-                draw_custom_tile("TDS 2", f"{tds_2} ppm", "white")
-            # else:
-            #     draw_custom_tile("TDS 2", "N/A", "red")
+            todays_water_consumption = values["water_consumption_daily"]
+            if todays_water_consumption is not None:
+                draw_custom_tile(
+                    "Water Consumption of the Day", f"{todays_water_consumption:.2f} L", "white"
+                )
+            else:
+                draw_custom_tile(
+                    "Water Consumption of the Day", f"N/A", "white"
+                )
 
 
 def settings_section(node_client=None, values: dict = {}):
-    container = st.container(border=True, height=470)
+    container = st.container(border=True, height=510)
     with container:
         st.header(body="Subscription Management", anchor=False)
         r1_cols = st.columns([1, 1, 1, 1], gap="large")
@@ -174,7 +186,7 @@ def settings_section(node_client=None, values: dict = {}):
             if expiry is not None:
                 draw_custom_tile(
                     "Plan Expiry Date",
-                    f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d')}",
+                  f"{datetime.fromtimestamp(expiry).strftime('%Y-%m-%d | %H:%M:%S')}",
                     "white",
                 )
             else:
@@ -190,25 +202,66 @@ def settings_section(node_client=None, values: dict = {}):
             # cols= st.columns([1, 1,1], gap="small")
             # with cols[0]:
             r1_cols = st.columns(
-                [1, 1, 0.26, 0.26, 0.14],
+                [0.5, 1, 0.26, 0.26, 0.14],
                 # gap="none",
-                vertical_alignment="bottom",
+                vertical_alignment="center",
             )
             with r1_cols[0]:
-                recharge = st.text_input(
-                    "Recharge Quantity (in L)",
-                    key="recharge_quantity",
-                    value="0",
-                )
+                res=node_client.get_valueStore(key="DailyWaterLimit")
+                value=res.get("value")
+                # st.write(value)
+                value= st.number_input("Daily Water Limit",step=1, value=value)
+                r1_r1_cols=st.columns([0.7,1],gap="small")
+                with r1_r1_cols[0]:
+                    pass
+                with r1_r1_cols[1]:
+                    submit = st.button("Set", key="daily_water_limit_set",width="stretch")
+                    if submit:
+                        res=node_client.set_valueStore(key="DailyWaterLimit",value=value,type="float")
+                        # st.write(res)
+                        if(res.get("isSuccess") is True):
+                            st.toast("Daily Water Limit value updated",icon="🎉")
+                        else:
+                            # st.write(res)
+                            mess=f"Failed to set the Daily Water Limit value"
+                            st.toast(mess,icon="❌")
             with r1_cols[1]:
-                date = st.date_input(
-                    "Expiry Date",
-                    key="expiry_date",
-                    value=datetime.now() + timedelta(days=30),
+                expiry_mode = st.radio(
+                    "Expiry Mode",
+                    ["Date", "Days"],
+                    horizontal=True,
+                    key="expiry_mode_radio",
+                    label_visibility="collapsed",
                 )
-                expiry = (
-                    int(datetime.strptime(str(date), "%Y-%m-%d").timestamp()) + 86400
-                )  # Adding 1 day to the epoch time
+                if expiry_mode == "Date":
+                    date_time=st.datetime_input(
+                    "Expiry Time",
+                    key="expiry_time",
+                    value=datetime.now() + relativedelta.relativedelta(months=1),
+                    step=300,
+                    )
+                    expiry = (
+                        int(datetime.strptime(str(date_time), "%Y-%m-%d %H:%M:%S").timestamp())
+                    )  # Adding 1 day to the epoch time
+                    # st.write(f'Epoch Time: {expiry}')
+                else:
+                    days_to_add = st.number_input(
+                        "Days to Add",
+                        min_value=0,
+                        value=30,
+                        key="expiry_days_input",
+                    )
+                    # Fetch existing expiry from values (Anedya)
+                    current_expiry = values.get("expiry", 0)
+                    if current_expiry is None or current_expiry == 0:
+                        base_time = time.time()
+                    else:
+                        base_time = current_expiry
+
+                    expiry = int(base_time + (days_to_add * 86400))
+                    # Show the resulting date for confirmation 
+                    res_date = datetime.fromtimestamp(expiry).strftime("%Y-%m-%d")
+                    # st.caption(f"Will expire on: {res_date}")
             with r1_cols[2]:
                 data = node_client.get_valueStore(key="PlanStatus")
                 value = 0
@@ -219,19 +272,7 @@ def settings_section(node_client=None, values: dict = {}):
                 submit = st.button("Renew")
                 if submit:
                     try:
-                        if recharge:
-                            
-                            recharge_value = float(recharge)
-                            if value is None:
-                                st.error("Fail to get current recharge value")
-                                st.stop()
-                            recharge_value = value + recharge_value
-                            recharge_value = round(recharge_value, 2)
-                            if recharge_value >=0:
-                                if expiry < int(time.time()):
-                                    st.toast("Expiry date cannot be in the past", icon="🚫")
-                                    return
-                                PlanStatusPayload = f"{recharge_value},{expiry}"
+                                PlanStatusPayload = f"1000000,{expiry}"
 
                                 res = node_client.set_valueStore(
                                     key="PlanStatus", value=PlanStatusPayload, type="string"
@@ -251,11 +292,7 @@ def settings_section(node_client=None, values: dict = {}):
                                 st.toast("Recharge successful", icon="🎉")
                                 time.sleep(1)
                                 st.rerun()
-                            else:
-                                st.toast("Recharge value cannot be negative", icon="🚫")
-                            
-                        else:
-                            st.toast("Please enter a valid number", icon="🚫")
+
                     except ValueError:
                             st.toast("Recharge value must be a float or int", icon="🚫")
                             # st.stop()

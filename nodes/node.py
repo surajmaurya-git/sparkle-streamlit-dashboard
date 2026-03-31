@@ -29,7 +29,7 @@ def draw_unit_1_dashboard():
     NODE_NAME=st.session_state.nodesId[f"node_{NODE_NUMBER}"].get("name")
     node = anedya.new_node(st.session_state.anedya_client, nodeId=NODE_ID)
     device_status_res = node.get_deviceStatus()
-    values={"water_limit":None,"expiry":None,"water_consumption":None, "left_water_limit": None, "tds_1":None, "tds_2": None} 
+    values={"water_limit":None,"expiry":None,"water_consumption":None, "left_water_limit": None, "tds_1":None, "tds_2": None, "water_consumption_daily": None} 
 
     # fetch plan status
     res = node.get_valueStore(key="PlanStatus")
@@ -48,6 +48,11 @@ def draw_unit_1_dashboard():
     wRes = node.get_valueStore(key="WaterCons")
     if wRes.get("isSuccess") is True and wRes.get("value") is not None:
          values["water_consumption"] = float(wRes.get("value"))
+         
+    #  fetch daily water consumption
+    wRes = node.get_valueStore(key="DailyCons")
+    if wRes.get("isSuccess") is True and wRes.get("value") is not None:
+         values["water_consumption_daily"] = float(wRes.get("value"))
 
     # Left water limit
     if(values["water_limit"] is not None and values["water_consumption"] is not None):

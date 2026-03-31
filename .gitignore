@@ -176,3 +176,4 @@ secrets.toml
 
 /nodes/*.py
 !/nodes/node.py
+.sfdx/
